@@ -6,8 +6,10 @@ import { api } from "../../../convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowLeft, ArrowDown, Circle, Trash2, Smile } from "lucide-react";
+import { Send, ArrowLeft, ArrowDown, Circle, Trash2, Smile, AlertCircle, RefreshCw } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,7 @@ interface ChatWindowProps {
 export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
     const [content, setContent] = useState("");
     const [showScrollButton, setShowScrollButton] = useState(false);
+    const [failedMessages, setFailedMessages] = useState<any[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,16 +51,36 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
         setShowScrollButton(scrollHeight - scrollTop - clientHeight > 120);
     };
 
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!content.trim()) return;
-        await sendMessage({ conversationId, content: content.trim() });
-        setContent("");
-        setTyping({ conversationId, isTyping: false });
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        setTimeout(() => {
-            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }, 50);
+    const handleSend = async (e?: React.FormEvent, retryContent?: string) => {
+        if (e) e.preventDefault();
+        const msgContent = retryContent || content.trim();
+        if (!msgContent) return;
+
+        if (!retryContent) {
+            setContent("");
+            setTyping({ conversationId, isTyping: false });
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        }
+
+        try {
+            await sendMessage({ conversationId, content: msgContent });
+            if (retryContent) {
+                setFailedMessages(prev => prev.filter(m => m.content !== retryContent));
+            }
+            setTimeout(() => {
+                if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }, 50);
+        } catch (error) {
+            console.error("Failed to send message:", error);
+            if (!retryContent) {
+                setFailedMessages(prev => [...prev, {
+                    content: msgContent,
+                    timestamp: Date.now(),
+                    _id: `failed-${Date.now()}`
+                }]);
+            }
+            toast.error("Message failed to send. Please try again.");
+        }
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,10 +104,23 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 
     if (!conversation) {
         return (
-            <div className="flex-1 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                    <div className="h-8 w-8 rounded-full border-2 border-t-primary border-border animate-spin" />
-                    <p className="text-xs">Loading conversation...</p>
+            <div className="flex h-full flex-col w-full">
+                <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0 bg-card">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-16" />
+                    </div>
+                </div>
+                <div className="flex-1 p-6 space-y-4 overflow-hidden">
+                    <div className="flex justify-start"><Skeleton className="h-10 w-2/3 rounded-2xl" /></div>
+                    <div className="flex justify-end"><Skeleton className="h-10 w-1/2 rounded-2xl" /></div>
+                    <div className="flex justify-start"><Skeleton className="h-10 w-3/4 rounded-2xl" /></div>
+                    <div className="flex justify-end"><Skeleton className="h-10 w-2/3 rounded-2xl" /></div>
+                    <div className="flex justify-start"><Skeleton className="h-10 w-1/2 rounded-2xl" /></div>
+                </div>
+                <div className="p-3 border-t border-border bg-card">
+                    <Skeleton className="h-10 w-full rounded-xl" />
                 </div>
             </div>
         );
@@ -237,6 +273,37 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                             </div>
                         );
                     })}
+
+                    {/* Failed Messages */}
+                    {failedMessages.map(msg => (
+                        <div key={msg._id} className="flex justify-end group">
+                            <div className="flex flex-col gap-1 items-end max-w-[70%]">
+                                <div className="bg-destructive/10 text-destructive border border-destructive/20 px-3.5 py-2 text-sm leading-relaxed rounded-2xl rounded-br-sm relative">
+                                    {msg.content}
+                                    <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                        <button
+                                            onClick={() => handleSend(undefined, msg.content)}
+                                            className="p-1.5 bg-background border border-border rounded-lg hover:bg-accent text-foreground transition-colors"
+                                            title="Retry"
+                                        >
+                                            <RefreshCw className="h-3.5 w-3.5" />
+                                        </button>
+                                        <button
+                                            onClick={() => setFailedMessages(prev => prev.filter(m => m._id !== msg._id))}
+                                            className="p-1.5 bg-background border border-border rounded-lg hover:bg-accent text-destructive transition-colors"
+                                            title="Discard"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] text-destructive font-medium pr-1">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Failed to send
+                                </div>
+                            </div>
+                        </div>
+                    ))}
 
                     {/* Typing indicator */}
                     {typing && typing.length > 0 && (
