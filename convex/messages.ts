@@ -75,6 +75,42 @@ export const remove = mutation({
     },
 });
 
+export const toggleReaction = mutation({
+    args: { messageId: v.id("messages"), emoji: v.string() },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const me = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .unique();
+
+        if (!me) throw new Error("User not found");
+
+        const message = await ctx.db.get(args.messageId);
+        if (!message) throw new Error("Message not found");
+
+        const reactions = message.reactions || [];
+        const existingIndex = reactions.findIndex(
+            (r) => r.userId === me._id && r.emoji === args.emoji
+        );
+
+        let newReactions;
+        if (existingIndex > -1) {
+            // Remove reaction
+            newReactions = reactions.filter((_, i) => i !== existingIndex);
+        } else {
+            // Add reaction
+            newReactions = [...reactions, { userId: me._id, emoji: args.emoji }];
+        }
+
+        await ctx.db.patch(args.messageId, {
+            reactions: newReactions,
+        });
+    },
+});
+
 export const markRead = mutation({
     args: { conversationId: v.id("conversations") },
     handler: async (ctx, args) => {

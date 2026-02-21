@@ -6,7 +6,8 @@ import { api } from "../../../convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowLeft, ArrowDown, Circle, Trash2 } from "lucide-react";
+import { Send, ArrowLeft, ArrowDown, Circle, Trash2, Smile } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -24,10 +25,12 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
     const messages = useQuery(api.messages.list, { conversationId });
     const sendMessage = useMutation(api.messages.send);
     const removeMessage = useMutation(api.messages.remove);
+    const toggleReaction = useMutation(api.messages.toggleReaction);
     const markRead = useMutation(api.messages.markRead);
     const typing = useQuery(api.typing.get, { conversationId });
     const setTyping = useMutation(api.typing.set);
     const conversations = useQuery(api.conversations.list);
+    const me = useQuery(api.users.getMe);
     const conversation = conversations?.find((c) => c._id === conversationId);
 
     useEffect(() => {
@@ -158,24 +161,80 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                         </span>
                                     </div>
                                 )}
-                                <div className={cn("flex group", isMe ? "justify-end" : "justify-start")}>
+                                <div className={cn("flex group items-start", isMe ? "justify-end" : "justify-start")}>
                                     {isMe && !msg.isDeleted && (
                                         <button
                                             onClick={() => removeMessage({ messageId: msg._id })}
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-destructive self-center mr-1"
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-destructive mt-1"
                                             title="Delete message"
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
                                     )}
-                                    <div className={cn(
-                                        "max-w-[70%] px-3.5 py-2 text-sm leading-relaxed rounded-2xl",
-                                        isMe
-                                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                                            : "bg-[oklch(0.20_0_0)] text-foreground border border-white/8 rounded-bl-sm",
-                                        msg.isDeleted && "opacity-60 italic"
-                                    )}>
-                                        {msg.content}
+
+                                    {/* Reaction Picker Trigger */}
+                                    {!msg.isDeleted && (
+                                        <div className={cn("mt-1", isMe ? "order-first mr-1" : "order-last ml-1")}>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-primary">
+                                                        <Smile className="h-4 w-4" />
+                                                    </button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-fit p-1.5 flex gap-1 bg-card border-border" side="top">
+                                                    {["👍", "❤️", "😂", "😮", "😢"].map(emoji => (
+                                                        <button
+                                                            key={emoji}
+                                                            onClick={() => toggleReaction({ messageId: msg._id, emoji })}
+                                                            className="hover:bg-white/10 p-1.5 rounded-lg transition-colors text-lg"
+                                                        >
+                                                            {emoji}
+                                                        </button>
+                                                    ))}
+                                                </PopoverContent>
+                                            </Popover>
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-col gap-1 items-end max-w-[70%]">
+                                        <div className={cn(
+                                            "px-3.5 py-2 text-sm leading-relaxed rounded-2xl w-full",
+                                            isMe
+                                                ? "bg-primary text-primary-foreground rounded-br-sm"
+                                                : "bg-[oklch(0.20_0_0)] text-foreground border border-white/8 rounded-bl-sm",
+                                            msg.isDeleted && "opacity-60 italic"
+                                        )}>
+                                            {msg.content}
+                                        </div>
+
+                                        {/* Reactions Display */}
+                                        {msg.reactions && msg.reactions.length > 0 && (
+                                            <div className={cn("flex flex-wrap gap-1 mt-0.5", isMe ? "justify-end" : "justify-start")}>
+                                                {Object.entries(
+                                                    msg.reactions.reduce((acc: any, r) => {
+                                                        acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                                                        return acc;
+                                                    }, {})
+                                                ).map(([emoji, count]: [string, any]) => {
+                                                    const hasMyReaction = msg.reactions?.some(r => r.userId === me?._id && r.emoji === emoji);
+                                                    return (
+                                                        <button
+                                                            key={emoji}
+                                                            onClick={() => toggleReaction({ messageId: msg._id, emoji })}
+                                                            className={cn(
+                                                                "flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border transition-colors",
+                                                                hasMyReaction
+                                                                    ? "bg-primary/20 border-primary/40 text-primary-foreground"
+                                                                    : "bg-white/5 border-white/10 text-muted-foreground hover:border-white/20"
+                                                            )}
+                                                        >
+                                                            <span>{emoji}</span>
+                                                            <span className="font-medium">{count}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
