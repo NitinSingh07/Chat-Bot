@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { useSyncUser } from "@/hooks/useSyncUser";
 import { ConversationList } from "@/components/chat/ConversationList";
@@ -15,30 +15,54 @@ import { Button } from "@/components/ui/button";
 export default function Home() {
   useSyncUser();
   const [selectedConversationId, setSelectedConversationId] = useState<any>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(380);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      let newWidth = e.clientX;
+      if (newWidth < 300) newWidth = 300;
+      if (newWidth > 500) newWidth = 500;
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => setIsDragging(false);
+
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.userSelect = "none";
+    } else {
+      document.body.style.userSelect = "";
+    }
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.userSelect = "";
+    };
+  }, [isDragging]);
 
   return (
-    <main className="flex h-full bg-background overflow-hidden relative premium-gradient">
+    <main className="flex h-full bg-[#0a1014] overflow-hidden relative">
       <PresenceHandler />
-
-      {/* Top-right user avatar — always visible */}
-      <SignedIn>
-        <div className="fixed top-3 right-4 z-50">
-          <UserButton afterSignOutUrl="/" />
-        </div>
-      </SignedIn>
 
       {/* Sidebar */}
       <div
+        style={{ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}
         className={cn(
-          "w-full md:w-[320px] border-r border-white/5 flex flex-col shrink-0 glass-sidebar relative",
+          "w-full md:w-[var(--sidebar-width)] border-r border-white/10 flex flex-col shrink-0 bg-[#111b21] relative transition-none",
           selectedConversationId ? "hidden md:flex" : "flex"
         )}
       >
+        <div
+          className="absolute top-0 right-[-3px] w-[6px] h-full cursor-col-resize z-50 hover:bg-white/10 active:bg-white/20 transition-colors hidden md:block"
+          onMouseDown={() => setIsDragging(true)}
+        />
         {/* Sidebar Header */}
-        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/5 backdrop-blur-xl">
+        <div className="px-4 h-[60px] border-b border-[#202c33] flex items-center justify-between shrink-0 bg-[#202c33]">
           <div className="flex items-center gap-3">
             <UserButton afterSignOutUrl="/" />
-            <h1 className="text-lg font-bold tracking-tight text-white">TARS Chat</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white/90 font-sans">TARS Chat</h1>
           </div>
         </div>
 
@@ -54,13 +78,13 @@ export default function Home() {
             </div>
 
             {/* Create Group Floating Button */}
-            <div className="absolute bottom-8 right-8 z-30">
+            <div className="absolute bottom-6 right-6 z-30">
               <CreateGroupDialog onSelect={(id) => setSelectedConversationId(id)}>
                 <Button
                   size="icon"
-                  className="h-16 w-16 rounded-[2rem] bg-gradient-to-tr from-indigo-500 via-primary to-violet-500 shadow-[0_20px_50px_rgba(79,70,229,0.4)] hover:shadow-[0_25px_60px_rgba(79,70,229,0.5)] hover:scale-110 active:scale-95 transition-all duration-500 group border border-white/20"
+                  className="h-14 w-14 rounded-xl bg-[#00a884] shadow-lg hover:shadow-xl hover:bg-[#06cf9c] hover:scale-105 active:scale-95 transition-all duration-300 group"
                 >
-                  <Plus className="h-8 w-8 text-white transition-transform duration-500 group-hover:rotate-[360deg] stroke-[2.5px]" />
+                  <MessageSquare className="h-6 w-6 text-white transition-transform duration-300" fill="currentColor" />
                 </Button>
               </CreateGroupDialog>
             </div>

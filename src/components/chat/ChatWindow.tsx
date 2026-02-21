@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { GroupAvatar } from "./GroupAvatar";
 import { GroupSettingsDialog } from "./GroupSettingsDialog";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -132,9 +133,9 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
     const firstName = conversation.isGroup ? "the group" : (conversation.otherUser?.name?.split(" ")[0] ?? "them");
 
     return (
-        <div className="flex h-full flex-col w-full">
+        <div className="flex h-full flex-col w-full bg-[#0a1014] relative">
             {/* Header */}
-            <div className="flex items-center gap-0 border-b border-white/5 px-2 py-3 shrink-0 glass-card bg-background/30 backdrop-blur-2xl sticky top-0 z-30 shadow-lg">
+            <div className="flex items-center gap-0 border-b border-[#202c33] px-4 h-[60px] shrink-0 bg-[#202c33] z-30 shadow-sm relative">
                 {onBack && (
                     <Button
                         variant="ghost"
@@ -171,13 +172,13 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                 {conversation.isGroup ? conversation.name : conversation.otherUser?.name}
                             </h2>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 mt-0.5">
                             <span className={cn(
-                                "text-[11px] font-bold leading-none tracking-wide flex items-center gap-1.5",
-                                conversation.isGroup ? "text-primary" : (isOnline ? "text-emerald-400" : "text-muted-foreground")
+                                "text-[13px] font-normal leading-none flex items-center gap-1.5 whitespace-nowrap",
+                                conversation.isGroup ? "text-[#aebac1]" : (isOnline ? "text-[#aebac1]" : "text-[#8696a0]")
                             )}>
-                                {!conversation.isGroup && isOnline && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                                {conversation.isGroup ? `${conversation.memberCount} MEMBERS` : (isOnline ? "ACTIVE NOW" : "OFFLINE")}
+                                {!conversation.isGroup && isOnline && <span className="h-2 w-2 rounded-full bg-[#00a884] shrink-0" />}
+                                {conversation.isGroup ? `${conversation.memberCount} members` : (isOnline ? "Active now" : "Offline")}
                             </span>
                         </div>
                     </div>
@@ -189,7 +190,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                             conversationId={conversationId}
                             currentName={conversation.name || ""}
                             currentParticipants={conversation.participants}
-                            isAdmin={conversation.adminId === me?._id}
+                            adminId={conversation.adminId}
                         />
                     )}
                 </div>
@@ -404,12 +405,27 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                             }}
                         />
                         <div className="absolute right-3 px-1">
-                            <button
-                                type="button"
-                                className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-white transition-all hover:bg-white/10 active:scale-95"
-                            >
-                                <Smile className="h-5.5 w-5.5" />
-                            </button>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="h-9 w-9 rounded-full flex items-center justify-center text-[#aebac1] hover:text-white transition-all hover:bg-white/5 active:scale-95"
+                                    >
+                                        <Smile className="h-6 w-6" />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                    side="top"
+                                    align="end"
+                                    className="w-full p-0 border-none bg-transparent shadow-none mb-2"
+                                >
+                                    <EmojiPicker
+                                        theme={Theme.DARK}
+                                        onEmojiClick={(emojiData) => setContent(prev => prev + emojiData.emoji)}
+                                        style={{ backgroundColor: '#111b21', borderColor: '#202c33' }}
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
                     <Button

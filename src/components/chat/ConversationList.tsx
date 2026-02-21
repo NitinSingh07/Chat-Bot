@@ -54,10 +54,10 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
                         key={conv._id}
                         onClick={() => onSelect(conv._id)}
                         className={cn(
-                            "flex items-center gap-4 px-4 py-5 text-left transition-all w-full relative group mx-2 my-1.5 rounded-[1.5rem] border border-transparent",
+                            "flex items-center gap-3 px-4 py-3 text-left transition-colors w-full relative group cursor-pointer",
                             selectedId === conv._id
-                                ? "glass-card bg-primary/25 border-primary/20 shadow-2xl shadow-primary/10 scale-[1.02]"
-                                : "hover:bg-white/5 hover:border-white/5"
+                                ? "bg-[#2a3942]"
+                                : "hover:bg-[#202c33]"
                         )}
                     >
                         <div className="relative shrink-0">
@@ -109,7 +109,7 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
                                 )}
                             </div>
                         </div>
-                        <div className="absolute bottom-0 right-6 left-20 h-[0.5px] bg-white/5" />
+                        <div className="absolute bottom-0 right-0 left-20 h-[1px] bg-[#202c33]" />
                     </button>
                 ))}
             </div>

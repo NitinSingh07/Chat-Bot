@@ -18,10 +18,10 @@ interface GroupSettingsDialogProps {
     conversationId: any;
     currentName: string;
     currentParticipants: any[];
-    isAdmin: boolean;
+    adminId: any;
 }
 
-export function GroupSettingsDialog({ conversationId, currentName, currentParticipants, isAdmin }: GroupSettingsDialogProps) {
+export function GroupSettingsDialog({ conversationId, currentName, currentParticipants, adminId }: GroupSettingsDialogProps) {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState(currentName);
     const [isEditingName, setIsEditingName] = useState(false);
@@ -30,6 +30,8 @@ export function GroupSettingsDialog({ conversationId, currentName, currentPartic
     const allUsers = useQuery(api.users.listAll, open ? { search } : "skip");
     const updateGroup = useMutation(api.conversations.updateGroup);
     const me = useQuery(api.users.getMe);
+
+    const isAdmin = me?._id === adminId;
 
     const handleUpdateName = async () => {
         if (!name.trim() || name === currentName) {
@@ -140,13 +142,13 @@ export function GroupSettingsDialog({ conversationId, currentName, currentPartic
                                     <span className="text-sm font-bold text-white px-1">Participant List</span>
                                     <UsersIcon className="h-4 w-4 text-muted-foreground" />
                                 </div>
-                                <ScrollArea className="h-[220px] p-2">
+                                <ScrollArea className="max-h-[220px] p-2">
                                     <div className="space-y-1">
                                         {currentParticipants.map(participantId => (
                                             <MemberItem
                                                 key={participantId}
                                                 userId={participantId}
-                                                isAdmin={participantId === me?._id} // Temporary: should check if this specific user is admin or original admin
+                                                isAdmin={participantId === adminId}
                                                 canRemove={isAdmin && participantId !== me?._id}
                                                 onRemove={handleRemoveMember}
                                             />
@@ -169,7 +171,7 @@ export function GroupSettingsDialog({ conversationId, currentName, currentPartic
                                             <UserPlus className="h-4 w-4" />
                                         </div>
                                     </div>
-                                    <ScrollArea className="h-[140px] border border-white/5 rounded-2xl bg-white/[0.02] p-2">
+                                    <ScrollArea className="max-h-[140px] border border-white/5 rounded-2xl bg-white/[0.02] p-2">
                                         <div className="space-y-1">
                                             {allUsers?.filter(u => !currentParticipants.includes(u._id)).map(user => (
                                                 <button
