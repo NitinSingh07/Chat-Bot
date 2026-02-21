@@ -140,6 +140,8 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                         </div>
                     )}
 
+                    {messages && messages.length > 0 && <div className="mt-auto" />}
+
                     {messages?.map((msg, idx) => {
                         const isMe = msg.senderId !== conversation.otherUser?._id;
                         const prevMsg = messages[idx - 1];
@@ -163,11 +165,6 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                             : "bg-[oklch(0.20_0_0)] text-foreground border border-white/8 rounded-bl-sm"
                                     )}>
                                         {msg.content}
-                                        {isLast && (
-                                            <div className={cn("text-[10px] mt-0.5 text-right", isMe ? "text-primary-foreground/50" : "text-muted-foreground/50")}>
-                                                {format(new Date(msg.createdAt), "h:mm a")}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
