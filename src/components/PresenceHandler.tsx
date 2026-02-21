@@ -1,32 +1,34 @@
 "use client";
 
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 
 export function PresenceHandler() {
+    const me = useQuery(api.users.getMe);
     const setStatus = useMutation(api.users.setStatus);
 
     useEffect(() => {
+        // Wait until current user record exists in the DB
+        if (!me) return;
         setStatus({ isOnline: true });
 
-        const handleVisibilityChange = () => {
-            setStatus({ isOnline: document.visibilityState === "visible" });
-        };
+        // Heartbeat every 15s to keep status fresh and prevent timeout
+        const interval = setInterval(() => {
+            setStatus({ isOnline: true });
+        }, 15000);
 
-        const handleBeforeUnload = () => {
-            // Small delay might not work here, usually heartbeats are better
+        const handleUnload = () => {
             setStatus({ isOnline: false });
         };
 
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        window.addEventListener("beforeunload", handleBeforeUnload);
+        window.addEventListener("beforeunload", handleUnload);
 
         return () => {
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
-            window.removeEventListener("beforeunload", handleBeforeUnload);
+            clearInterval(interval);
+            window.removeEventListener("beforeunload", handleUnload);
         };
-    }, [setStatus]);
+    }, [me?._id, setStatus]);
 
     return null;
 }

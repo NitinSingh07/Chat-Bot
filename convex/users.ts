@@ -19,6 +19,8 @@ export const store = mutation({
                 name: args.name,
                 email: args.email,
                 image: args.image,
+                isOnline: true,
+                lastSeen: Date.now(),
             });
             return existingUser._id;
         }
