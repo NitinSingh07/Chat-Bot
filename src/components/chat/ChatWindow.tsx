@@ -6,7 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowLeft, ArrowDown, Circle } from "lucide-react";
+import { Send, ArrowLeft, ArrowDown, Circle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +23,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 
     const messages = useQuery(api.messages.list, { conversationId });
     const sendMessage = useMutation(api.messages.send);
+    const removeMessage = useMutation(api.messages.remove);
     const markRead = useMutation(api.messages.markRead);
     const typing = useQuery(api.typing.get, { conversationId });
     const setTyping = useMutation(api.typing.set);
@@ -157,12 +158,22 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                         </span>
                                     </div>
                                 )}
-                                <div className={cn("flex", isMe ? "justify-end" : "justify-start")}>
+                                <div className={cn("flex group", isMe ? "justify-end" : "justify-start")}>
+                                    {isMe && !msg.isDeleted && (
+                                        <button
+                                            onClick={() => removeMessage({ messageId: msg._id })}
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-destructive self-center mr-1"
+                                            title="Delete message"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
                                     <div className={cn(
                                         "max-w-[70%] px-3.5 py-2 text-sm leading-relaxed rounded-2xl",
                                         isMe
                                             ? "bg-primary text-primary-foreground rounded-br-sm"
-                                            : "bg-[oklch(0.20_0_0)] text-foreground border border-white/8 rounded-bl-sm"
+                                            : "bg-[oklch(0.20_0_0)] text-foreground border border-white/8 rounded-bl-sm",
+                                        msg.isDeleted && "opacity-60 italic"
                                     )}>
                                         {msg.content}
                                     </div>

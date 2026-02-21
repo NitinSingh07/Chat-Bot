@@ -36,11 +36,42 @@ export const send = mutation({
 export const list = query({
     args: { conversationId: v.id("conversations") },
     handler: async (ctx, args) => {
-        return await ctx.db
+        const messages = await ctx.db
             .query("messages")
             .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
             .order("asc")
             .collect();
+
+        return messages.map(msg => ({
+            ...msg,
+            content: msg.isDeleted ? "This message was deleted" : msg.content,
+        }));
+    },
+});
+
+export const remove = mutation({
+    args: { messageId: v.id("messages") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const me = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .unique();
+
+        if (!me) throw new Error("User not found");
+
+        const message = await ctx.db.get(args.messageId);
+        if (!message) throw new Error("Message not found");
+
+        if (message.senderId !== me._id) {
+            throw new Error("Unauthorized to delete this message");
+        }
+
+        await ctx.db.patch(args.messageId, {
+            isDeleted: true,
+        });
     },
 });
 

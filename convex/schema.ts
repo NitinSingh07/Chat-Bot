@@ -10,7 +10,7 @@ export default defineSchema({
     isOnline: v.boolean(),
     lastSeen: v.number(),
   }).index("by_clerkId", ["clerkId"]),
-  
+
   conversations: defineTable({
     participants: v.array(v.id("users")),
     lastMessageId: v.optional(v.id("messages")),
@@ -22,6 +22,7 @@ export default defineSchema({
     content: v.string(),
     createdAt: v.number(),
     isRead: v.boolean(),
+    isDeleted: v.optional(v.boolean()),
   }).index("by_conversation", ["conversationId"]),
 
   typingStatus: defineTable({
