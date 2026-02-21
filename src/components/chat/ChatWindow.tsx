@@ -132,34 +132,48 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
     return (
         <div className="flex h-full flex-col w-full">
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0 bg-card">
+            <div className="flex items-center gap-0 border-b border-white/5 px-2 py-3 shrink-0 glass-card bg-background/30 backdrop-blur-2xl sticky top-0 z-30 shadow-lg">
                 {onBack && (
-                    <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden h-8 w-8 shrink-0 rounded-lg">
-                        <ArrowLeft className="h-4 w-4" />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="md:hidden h-10 w-10 text-muted-foreground mr-1 hover:bg-white/5 rounded-xl"
+                        onClick={onBack}
+                    >
+                        <ArrowLeft className="h-5 w-5" />
                     </Button>
                 )}
-                <div className="relative shrink-0">
-                    <Avatar className="h-10 w-10 border-2 border-border">
-                        <AvatarImage src={conversation.otherUser?.image} />
-                        <AvatarFallback className="font-bold text-sm bg-primary/20 text-primary">
-                            {conversation.otherUser?.name?.[0]?.toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
-                    <span className={cn(
-                        "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card",
-                        isOnline ? "bg-emerald-500" : "bg-zinc-600"
-                    )} />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <h2 className="text-sm font-semibold truncate leading-tight">{conversation.otherUser?.name}</h2>
-                    <span className={cn("text-[11px] font-medium leading-none", isOnline ? "text-emerald-400" : "text-muted-foreground")}>
-                        {isOnline ? "Active now" : "Offline"}
-                    </span>
+
+                <div className="flex items-center gap-3.5 flex-1 min-w-0 py-1.5 px-2.5 rounded-2xl hover:bg-white/5 transition-all cursor-pointer group">
+                    <div className="relative shrink-0">
+                        <Avatar className="h-11 w-11 border-2 border-white/10 shadow-xl group-hover:scale-105 transition-transform duration-300">
+                            <AvatarImage src={conversation.otherUser?.image} />
+                            <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary to-primary/40 text-white">
+                                {conversation.otherUser?.name?.[0]?.toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span className={cn(
+                            "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#1a1c2e] shadow-lg transition-colors duration-500",
+                            isOnline ? "bg-emerald-500 ring-2 ring-emerald-500/20" : "bg-zinc-600"
+                        )} />
+                    </div>
+                    <div className="flex flex-col min-w-0 gap-0.5">
+                        <h2 className="text-[16px] font-bold truncate leading-tight tracking-tight text-white group-hover:text-primary transition-colors">
+                            {conversation.otherUser?.name}
+                        </h2>
+                        <span className={cn(
+                            "text-[11px] font-bold leading-none tracking-wide flex items-center gap-1.5",
+                            isOnline ? "text-emerald-400" : "text-muted-foreground"
+                        )}>
+                            {isOnline && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                            {isOnline ? "ACTIVE NOW" : "OFFLINE"}
+                        </span>
+                    </div>
                 </div>
             </div>
 
             {/* Messages Area */}
-            <div className="relative flex-1 overflow-hidden" style={{ background: "oklch(0.12 0 0)" }}>
+            <div className="relative flex-1 overflow-hidden">
                 <div
                     ref={scrollRef}
                     onScroll={handleScroll}
@@ -183,18 +197,18 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                         const isMe = msg.senderId !== conversation.otherUser?._id;
                         const prevMsg = messages[idx - 1];
                         const showTimestamp = !prevMsg || msg.createdAt - prevMsg.createdAt > 300000;
-                        const isLast = idx === messages.length - 1;
+                        const isNewGroup = !prevMsg || prevMsg.senderId !== msg.senderId;
 
                         return (
-                            <div key={msg._id}>
+                            <div key={msg._id} className={cn("flex flex-col", isNewGroup && !showTimestamp ? "mt-4" : "")}>
                                 {showTimestamp && (
-                                    <div className="flex justify-center my-3">
-                                        <span className="text-[11px] text-muted-foreground/70 bg-white/5 px-3 py-0.5 rounded-full border border-white/5">
+                                    <div className="flex justify-center my-6">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60 bg-white/5 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5">
                                             {formatDate(msg.createdAt)}
                                         </span>
                                     </div>
                                 )}
-                                <div className={cn("flex group items-start", isMe ? "justify-end" : "justify-start")}>
+                                <div className={cn("flex group items-start gap-1.5 shadow-sm transition-all", isMe ? "justify-end" : "justify-start")}>
                                     {isMe && !msg.isDeleted && (
                                         <button
                                             onClick={() => removeMessage({ messageId: msg._id })}
@@ -229,15 +243,16 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                         </div>
                                     )}
 
-                                    <div className="flex flex-col gap-1 items-end max-w-[70%]">
+                                    <div className={cn("flex flex-col gap-1 items-end max-w-[85%] sm:max-w-[70%]")}>
                                         <div className={cn(
-                                            "px-3.5 py-2 text-sm leading-relaxed rounded-2xl w-full",
+                                            "px-4 py-3 text-[14.5px] leading-relaxed shadow-xl transition-all relative overflow-hidden",
                                             isMe
-                                                ? "bg-primary text-primary-foreground rounded-br-sm"
-                                                : "bg-[oklch(0.20_0_0)] text-foreground border border-white/8 rounded-bl-sm",
+                                                ? "bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-[1.25rem] rounded-tr-[4px]"
+                                                : "glass-card bg-[#202c33]/40 text-foreground border-white/5 rounded-[1.25rem] rounded-tl-[4px]",
                                             msg.isDeleted && "opacity-60 italic"
                                         )}>
-                                            {msg.content}
+                                            {isMe && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />}
+                                            <span className="relative z-10">{msg.content}</span>
                                         </div>
 
                                         {/* Reactions Display */}
@@ -276,24 +291,24 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 
                     {/* Failed Messages */}
                     {failedMessages.map(msg => (
-                        <div key={msg._id} className="flex justify-end group">
-                            <div className="flex flex-col gap-1 items-end max-w-[70%]">
-                                <div className="bg-destructive/10 text-destructive border border-destructive/20 px-3.5 py-2 text-sm leading-relaxed rounded-2xl rounded-br-sm relative">
+                        <div key={msg._id} className="flex justify-end group mt-1">
+                            <div className="flex flex-col gap-1 items-end max-w-[85%] sm:max-w-[70%]">
+                                <div className="bg-destructive/10 text-destructive border border-destructive/20 px-3.5 py-2.5 text-sm leading-relaxed rounded-2xl rounded-br-sm relative shadow-sm">
                                     {msg.content}
-                                    <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                    <div className="absolute -left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
                                         <button
                                             onClick={() => handleSend(undefined, msg.content)}
-                                            className="p-1.5 bg-background border border-border rounded-lg hover:bg-accent text-foreground transition-colors"
+                                            className="p-1.5 bg-background border border-border rounded-xl hover:bg-accent text-foreground transition-colors shadow-lg"
                                             title="Retry"
                                         >
-                                            <RefreshCw className="h-3.5 w-3.5" />
+                                            <RefreshCw className="h-4 w-4" />
                                         </button>
                                         <button
                                             onClick={() => setFailedMessages(prev => prev.filter(m => m._id !== msg._id))}
-                                            className="p-1.5 bg-background border border-border rounded-lg hover:bg-accent text-destructive transition-colors"
+                                            className="p-1.5 bg-background border border-border rounded-xl hover:bg-accent text-destructive transition-colors shadow-lg"
                                             title="Discard"
                                         >
-                                            <Trash2 className="h-3.5 w-3.5" />
+                                            <Trash2 className="h-4 w-4" />
                                         </button>
                                     </div>
                                 </div>
@@ -337,31 +352,49 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
             </div>
 
             {/* Input bar */}
-            <form
-                onSubmit={handleSend}
-                className="border-t border-border px-3 py-3 flex gap-2 items-center shrink-0 bg-card"
-            >
-                <Input
-                    placeholder={`Message ${firstName}...`}
-                    value={content}
-                    onChange={handleInputChange}
-                    className="flex-1 bg-background border-white/8 text-sm h-10 rounded-xl focus-visible:ring-primary/40"
-                    autoComplete="off"
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSend(e as any);
-                        }
-                    }}
-                />
-                <button
-                    type="submit"
-                    disabled={!content.trim()}
-                    className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-30 shrink-0"
+            <div className="p-4 bg-background/20 backdrop-blur-2xl border-t border-white/5 shrink-0 z-30">
+                <form
+                    onSubmit={handleSend}
+                    className="flex gap-3 items-center max-w-5xl mx-auto"
                 >
-                    <Send className="h-4 w-4" />
-                </button>
-            </form>
+                    <div className="flex-1 relative flex items-center group">
+                        <Input
+                            placeholder={`Type a message...`}
+                            value={content}
+                            onChange={handleInputChange}
+                            className="w-full bg-white/5 border-white/5 text-[15px] h-12 pl-6 pr-14 rounded-full focus-visible:ring-2 focus-visible:ring-primary/40 transition-all shadow-2xl group-hover:bg-white/10"
+                            autoComplete="off"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend(e as any);
+                                }
+                            }}
+                        />
+                        <div className="absolute right-3 px-1">
+                            <button
+                                type="button"
+                                className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-white transition-all hover:bg-white/10 active:scale-95"
+                            >
+                                <Smile className="h-5.5 w-5.5" />
+                            </button>
+                        </div>
+                    </div>
+                    <Button
+                        type="submit"
+                        size="icon"
+                        disabled={!content.trim()}
+                        className={cn(
+                            "h-12 w-12 rounded-full transition-all shrink-0 shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] active:scale-90",
+                            content.trim()
+                                ? "bg-gradient-to-tr from-indigo-600 to-violet-600 dark:from-primary dark:to-primary/60 scale-100 opacity-100"
+                                : "bg-white/5 scale-90 opacity-40"
+                        )}
+                    >
+                        <Send className="h-5.5 w-5.5 text-white" />
+                    </Button>
+                </form>
+            </div>
         </div>
     );
 }

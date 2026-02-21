@@ -15,7 +15,7 @@ export default function Home() {
   const [selectedConversationId, setSelectedConversationId] = useState<any>(null);
 
   return (
-    <main className="flex h-full bg-background overflow-hidden relative">
+    <main className="flex h-full bg-background overflow-hidden relative premium-gradient">
       <PresenceHandler />
 
       {/* Top-right user avatar — always visible */}

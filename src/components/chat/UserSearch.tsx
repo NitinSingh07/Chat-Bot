@@ -24,12 +24,12 @@ export function UserSearch({ onSelect }: { onSelect: (id: string) => void }) {
     };
 
     return (
-        <div className="px-3 py-2 shrink-0">
+        <div className="px-4 py-3 shrink-0">
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start gap-2 text-muted-foreground text-sm h-9 rounded-xl bg-muted/50 border-transparent hover:bg-muted hover:border-border">
-                        <Search className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">Find people...</span>
+                    <Button variant="outline" className="w-full justify-start gap-3 text-muted-foreground/80 text-sm h-11 rounded-2xl bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 shadow-lg transition-all group">
+                        <Search className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+                        <span className="truncate">Search messages or people...</span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden gap-0">

@@ -47,20 +47,22 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
 
     return (
         <ScrollArea className="h-full">
-            <div className="flex flex-col gap-0.5 p-2">
+            <div className="flex flex-col">
                 {conversations.map((conv) => (
                     <button
                         key={conv._id}
                         onClick={() => onSelect(conv._id)}
                         className={cn(
-                            "flex items-center gap-3 rounded-xl p-3 text-left transition-all w-full hover:bg-accent/60",
-                            selectedId === conv._id && "bg-accent"
+                            "flex items-center gap-4 px-4 py-4 text-left transition-all w-full relative group mx-2 my-1 rounded-2xl",
+                            selectedId === conv._id ? "glass-card bg-primary/20" : "hover:bg-white/5"
                         )}
                     >
                         <div className="relative shrink-0">
-                            <Avatar className="h-10 w-10">
+                            <Avatar className="h-12 w-12 border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
                                 <AvatarImage src={conv.otherUser?.image} />
-                                <AvatarFallback className="text-xs font-semibold">{conv.otherUser?.name?.[0]}</AvatarFallback>
+                                <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary/40 to-primary/10 text-white">
+                                    {conv.otherUser?.name?.[0]?.toUpperCase()}
+                                </AvatarFallback>
                             </Avatar>
                             {conv.otherUser?.isOnline && (
                                 <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500" />
@@ -68,24 +70,31 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
                         </div>
                         <div className="flex-1 overflow-hidden">
                             <div className="flex items-center justify-between gap-2">
-                                <span className="truncate text-sm font-medium">{conv.otherUser?.name}</span>
+                                <span className="truncate text-[15px] font-semibold tracking-tight">{conv.otherUser?.name}</span>
                                 {conv.lastMessage && (
-                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
+                                    <span className={cn(
+                                        "text-[10px] whitespace-nowrap shrink-0",
+                                        conv.unreadCount > 0 ? "text-primary font-bold" : "text-muted-foreground"
+                                    )}>
                                         {formatDistanceToNow(conv.lastMessage.createdAt, { addSuffix: false })}
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center justify-between gap-2 mt-0.5">
-                                <p className="truncate text-xs text-muted-foreground">
+                            <div className="flex items-center justify-between gap-2 mt-1">
+                                <p className={cn(
+                                    "truncate text-[13px] leading-tight flex-1",
+                                    conv.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"
+                                )}>
                                     {conv.lastMessage?.content ?? "No messages yet"}
                                 </p>
                                 {conv.unreadCount > 0 && (
-                                    <Badge className="h-4 min-w-4 justify-center rounded-full px-1 text-[9px] shrink-0 bg-primary text-primary-foreground">
+                                    <Badge className="h-5 min-w-5 justify-center rounded-full px-1 text-[10px] shrink-0 bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20">
                                         {conv.unreadCount}
                                     </Badge>
                                 )}
                             </div>
                         </div>
+                        <div className="absolute bottom-0 right-6 left-20 h-[0.5px] bg-white/5" />
                     </button>
                 ))}
             </div>
